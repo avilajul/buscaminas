@@ -19,12 +19,13 @@
       >3</span>
     </div>
     <div class="panel">
-      <div class="marcador minas-restantes">999</div>
-      <div class="cara">🙂</div>
-      <div class="marcador segundos">999</div>
+      <div class="marcador minas-restantes">{{minasRestantesCifras}}</div>
+      <div @click="iniciarNivel" class="cara">🙂</div>
+      <div class="marcador segundos">{{segundosCifras}}</div>
     </div>
     <div class="matriz">
       <cuadro
+        @onCambiarMinasRestantes="cambiarMinasRestantes"
         @onActivar="activarCuadro"
         :info="item"
         v-for="(item, index) in cuadros"
@@ -37,6 +38,7 @@
 
 <script>
 import Cuadro from "./Cuadro.vue";
+import { setInterval, clearInterval } from "timers";
 export default {
   components: {
     Cuadro
@@ -76,8 +78,33 @@ export default {
         minas: 99
       },
       nivelActual: null,
-      minas: []
+      minas: [],
+      minasRestantes: 0,
+      segundos: 0,
+      inicio: false,
+      timer: null
     };
+  },
+  computed: {
+    minasRestantesCifras() {
+      let cifras = this.minasRestantes.toString();
+
+      if (cifras.length == 1) {
+        cifras = "00" + cifras;
+      } else if (cifras.length == 2) {
+        cifras = "0" + cifras;
+      }
+      return cifras;
+    },
+    segundosCifras() {
+      let cifras = this.segundos.toString();
+      if (cifras.length == 1) {
+        cifras = "00" + cifras;
+      } else if (cifras.length == 2) {
+        cifras = "0" + cifras;
+      }
+      return cifras;
+    }
   },
   created() {
     this.nivelActual = this.nivelPrincipiante;
@@ -85,6 +112,11 @@ export default {
   },
 
   methods: {
+    detenerTiempo() {
+      if (this.timer) {
+        clearInterval(this.timer);
+      }
+    },
     seleccionarNivel(nivel) {
       if (this.nivelActual.nivel == nivel) {
         return;
@@ -99,6 +131,11 @@ export default {
       this.iniciarNivel();
     },
     iniciarNivel() {
+      this.detenerTiempo();
+      this.minasRestantes = this.nivelActual.minas;
+      this.segundos = 0;
+      this.inicio = false;
+
       let filas = this.nivelActual.filas;
       let columnas = this.nivelActual.columnas;
       let totalCuadros = filas * columnas;
@@ -116,8 +153,6 @@ export default {
           vecinos: [],
           claseValor: ""
         };
-
-        console.log(i, cuadro.fila, cuadro.columna);
         this.cuadros.push(cuadro);
         indices.push(i);
       }
@@ -202,6 +237,12 @@ export default {
       this.jugando = true;
     },
     activarCuadro(cuadro) {
+      if (!this.inicio) {
+        this.timer = setInterval(() => {
+          this.segundos++;
+        }, 1000);
+        this.inicio = true;
+      }
       if (cuadro.inicial && !cuadro.bandera) {
         cuadro.inicial = false;
 
@@ -213,6 +254,9 @@ export default {
           });
         }
       }
+    },
+    cambiarMinasRestantes(cantidad) {
+      this.minasRestantes += cantidad;
     }
   }
 };
@@ -257,6 +301,7 @@ html {
   justify-content: center;
   background-color: #bdbdbd;
   padding: 10px;
+  user-select: none;
 }
 .niveles {
   display: grid;
@@ -287,11 +332,24 @@ html {
   display: grid;
   grid-auto-flow: column;
   font-size: 30px;
+  margin-top: 10px;
+  padding: 10px;
+  border-top-color: #818181;
+  border-bottom-color: #818181;
+  border-right-color: #fff;
+  border-style: solid;
+  border-width: 2px;
 }
 .marcador {
   background-color: black;
   color: red;
   height: 40px;
+  padding: 2px;
+  border-top-color: #818181;
+  border-bottom-color: #818181;
+  border-right-color: #fff;
+  border-style: solid;
+  border-width: 1px;
 }
 .minas-restantes {
   justify-self: start;
@@ -302,6 +360,14 @@ html {
   justify-self: center;
   width: 40px;
   height: 40px;
+  font-size: 24px;
+  border-top-color: #fff;
+  border-left-color: #fff;
+  border-bottom-color: #818181;
+  border-right-color: #818181;
+  border-style: solid;
+  border-width: 2px;
+  cursor: pointer;
 }
 .segundos {
   justify-self: end;
