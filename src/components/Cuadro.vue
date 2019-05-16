@@ -1,7 +1,14 @@
 <template>
-  <div class="cuadro cuadro-inicial"></div>
+  <div class="cuadro cuadro-inicial">
+    <span>{{info.valor}}</span>
+  </div>
 </template>
 
+<script>
+export default {
+  props: ["info"]
+};
+</script>
 
 <style>
 .cuadro {
